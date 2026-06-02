@@ -70,15 +70,21 @@ class Game:
         
         # Ataque del jugador
         if self.player.is_attacking and distance < PUNCH_RANGE:
-            damage = (PUNCH_DAMAGE if self.player.attack_type == 'punch' 
-                     else KICK_DAMAGE)
-            self.enemy.take_damage(damage)
+            if not self.player.attack_damage_dealt:  # ← NUEVO: Solo una vez por ataque
+                damage = (PUNCH_DAMAGE if self.player.attack_type == 'punch' 
+                    else KICK_DAMAGE)
+                self.enemy.take_damage(damage)
+                self.player.attack_damage_dealt = True  # ← NUEVO: Marcar que ya causó daño
+                print(f"¡Golpe! Daño al enemigo: {damage}")  # ← DEBUG
             
         # Ataque del enemigo
         if self.enemy.is_attacking and distance < PUNCH_RANGE:
-            damage = (PUNCH_DAMAGE if self.enemy.attack_type == 'punch' 
-                     else KICK_DAMAGE)
-            self.player.take_damage(damage)
+            if not self.enemy.attack_damage_dealt:  # ← NUEVO: Solo una vez por ataque
+                damage = (PUNCH_DAMAGE if self.enemy.attack_type == 'punch' 
+                    else KICK_DAMAGE)
+                self.player.take_damage(damage)
+                self.enemy.attack_damage_dealt = True  # ← NUEVO: Marcar que ya causó daño
+                print(f"¡Golpe del enemigo! Daño al jugador: {damage}")  # ← DEBUG
             
     def _update(self):
         """Actualizar lógica del juego"""
