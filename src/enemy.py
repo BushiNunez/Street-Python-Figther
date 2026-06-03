@@ -7,7 +7,7 @@ class Enemy(Character):
     """Enemigo controlado por IA"""
     
     def __init__(self, x, y):
-        super().__init__(x, y, color='red', is_player=False)
+        super().__init__(x, y, color='#ff6b35', is_player=False)  # Naranja para el enemigo
         self.action_timer = 0
         
     def update(self, player):

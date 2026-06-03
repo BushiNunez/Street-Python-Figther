@@ -7,7 +7,7 @@ class Character:
     def __init__(self, x, y, color, is_player=True):
         self.x = x
         self.y = y
-        self.color = color
+        self.color = '#00ff41'
         self.health = HEALTH_MAX
         self.is_attacking = False
         self.attack_type = None

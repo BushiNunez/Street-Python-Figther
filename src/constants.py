@@ -28,3 +28,8 @@ ENEMY_ACTION_MIN = 15
 ENEMY_ACTION_MAX = 40
 ENEMY_DISTANCE_CHASE = 150
 ENEMY_DISTANCE_ATTACK = 80
+
+# ========== ANIMACIÓN ==========
+ANIMATION_SPEED = 5  # Velocidad de la animación (frames)
+SNAKE_SEGMENTS = 5   # Cantidad de segmentos de la serpiente
+SEGMENT_SIZE = 15    # Tamaño de cada segmento
