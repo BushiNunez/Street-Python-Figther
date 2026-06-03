@@ -111,8 +111,8 @@ class Game:
         """Dibujar elementos del juego"""
         self.canvas.delete('all')
         
-        # Fondo con efecto arcade
-        self.canvas.create_rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, fill='#1a1a2e')
+        # Fondo con gradiente (simulado)
+        self.canvas.create_rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, fill='#0a0e27')
         
         # Línea separadora del ring
         self.canvas.create_line(
@@ -120,9 +120,9 @@ class Game:
             fill='#ff6b35', width=2, dash=(10, 10)
         )
         
-        # Personajes (serpientes)
-        self._draw_snake(self.player, '#00ff41')
-        self._draw_snake(self.enemy, '#ff6b35')
+        # Personajes (serpientes mejoradas)
+        self._draw_snake(self.player, is_player=True)
+        self._draw_snake(self.enemy, is_player=False)
         
         # Barras de salud
         self._draw_health_bar(self.player, 20, 20, '#00ff41')
@@ -139,93 +139,284 @@ class Game:
         if self.game_over:
             self._draw_game_over()
             
-    def _draw_snake(self, character, color):
-        """Dibujar una serpiente animada"""
+    def _draw_snake(self, character, is_player=True):
+        """Dibujar serpiente musculosa tipo Street Fighter"""
         head_x = character.x
         head_y = character.y
         
-        # Efecto de ondulación cuando camina
-        wave_offset = 0
-        if character.attack_timer > 0:  # Está atacando
-            wave_offset = (self.animation_frame % 10) * 3
+        # Colores
+        if is_player:
+            main_color = '#66dd00'      # Verde fluorescente
+            dark_color = '#339900'      # Verde oscuro
+            accent_color = '#ffff00'    # Amarillo
+            belt_color = '#dd0000'      # Rojo
         else:
-            wave_offset = (self.animation_frame % 20) * 1.5
+            main_color = '#ff9900'      # Naranja
+            dark_color = '#cc6600'      # Naranja oscuro
+            accent_color = '#ffff00'    # Amarillo
+            belt_color = '#0066ff'      # Azul
         
-        # Dibujar segmentos de la serpiente (cuerpo)
-        for i in range(SNAKE_SEGMENTS, 0, -1):
-            segment_x = head_x - (i * SEGMENT_SIZE)
-            # Ondulación del cuerpo
-            segment_y = head_y + (10 * (i % 2)) if i % 2 == 0 else head_y - (10 * (i % 2))
+        # ========== COLA ==========
+        tail_segments = 8
+        tail_x = head_x - 150
+        for i in range(tail_segments):
+            segment_x = head_x - 100 - (i * 20)
+            segment_y = head_y + 40 + (10 * ((i % 2) - 0.5))
+            size = 15 - i
             
-            # Variación de tamaño (más pequeño hacia la cola)
-            size = SEGMENT_SIZE - (i * 2)
-            
-            # Dibujar segmento como óvalo
+            # Segmento de cola
             self.canvas.create_oval(
                 segment_x - size, segment_y - size,
                 segment_x + size, segment_y + size,
-                fill=color, outline='#ffffff', width=2
+                fill=main_color, outline=dark_color, width=2
             )
-            
-            # Patrón de escamas
-            self.canvas.create_line(
-                segment_x - size + 5, segment_y,
-                segment_x + size - 5, segment_y,
-                fill='#ffffff', width=1
+            # Escamas
+            self.canvas.create_arc(
+                segment_x - size, segment_y - size,
+                segment_x + size, segment_y + size,
+                start=0, extent=180, outline=dark_color, width=1
             )
         
-        # Dibujar cabeza
-        head_size = SEGMENT_SIZE + 5
+        # ========== CUERPO PRINCIPAL ==========
+        body_width = 70
+        body_height = 80
+        
+        # Vientre más claro
         self.canvas.create_oval(
-            head_x - head_size, head_y - head_size,
-            head_x + head_size, head_y + head_size,
-            fill=color, outline='#ffffff', width=3
+            head_x - body_width + 10, head_y - body_height // 2,
+            head_x + body_width - 10, head_y + body_height // 2,
+            fill='#99ff00', outline=dark_color, width=2
         )
         
-        # Ojos de la serpiente
-        eye_offset = 8
-        if character.facing_right:
-            # Ojos hacia la derecha
-            eye1_x = head_x + eye_offset
-            eye2_x = head_x + eye_offset
-        else:
-            # Ojos hacia la izquierda
-            eye1_x = head_x - eye_offset
-            eye2_x = head_x - eye_offset
-            
-        self.canvas.create_oval(
-            eye1_x - 3, head_y - 5, eye1_x + 3, head_y - 1,
-            fill='#ffffff'
-        )
-        self.canvas.create_oval(
-            eye2_x - 3, head_y + 1, eye2_x + 3, head_y + 5,
-            fill='#ffffff'
+        # Músculos del cuerpo (sombreado)
+        self.canvas.create_arc(
+            head_x - body_width, head_y - body_height // 2,
+            head_x - body_width + 40, head_y + body_height // 2,
+            start=90, extent=180, fill=dark_color, outline=dark_color
         )
         
-        # Lengua de la serpiente (cuando ataca)
+        self.canvas.create_arc(
+            head_x + body_width - 40, head_y - body_height // 2,
+            head_x + body_width, head_y + body_height // 2,
+            start=270, extent=180, fill=dark_color, outline=dark_color
+        )
+        
+        # ========== CINTURÓN ROJO ==========
+        self.canvas.create_rectangle(
+            head_x - body_width - 5, head_y + body_height // 2 - 15,
+            head_x + body_width + 5, head_y + body_height // 2 + 15,
+            fill=belt_color, outline='#000000', width=2
+        )
+        
+        # Símbolo en el cinturón
+        self.canvas.create_text(
+            head_x, head_y + body_height // 2,
+            text='P1' if is_player else 'CPU',
+            fill='#ffff00', font=('Arial', 12, 'bold')
+        )
+        
+        # ========== PATAS ==========
+        leg_y = head_y + body_height // 2 + 30
+        
+        # Pata izquierda
+        self.canvas.create_oval(
+            head_x - body_width + 10, leg_y - 15,
+            head_x - body_width + 35, leg_y + 15,
+            fill=main_color, outline=dark_color, width=2
+        )
+        self.canvas.create_polygon(
+            head_x - body_width + 20, leg_y + 15,
+            head_x - body_width + 10, leg_y + 30,
+            head_x - body_width + 30, leg_y + 30,
+            fill=dark_color, outline='#000000', width=1
+        )
+        
+        # Pata derecha
+        self.canvas.create_oval(
+            head_x + body_width - 35, leg_y - 15,
+            head_x + body_width - 10, leg_y + 15,
+            fill=main_color, outline=dark_color, width=2
+        )
+        self.canvas.create_polygon(
+            head_x + body_width - 20, leg_y + 15,
+            head_x + body_width - 30, leg_y + 30,
+            head_x + body_width - 10, leg_y + 30,
+            fill=dark_color, outline='#000000', width=1
+        )
+        
+        # ========== BRAZOS ==========
+        arm_lift = 0 if not character.is_attacking else (-20 + (self.animation_frame % 10))
+        
+        # Brazo izquierdo
+        arm_left_x = head_x - body_width - 20
+        arm_left_y = head_y - 20 + arm_lift
+        
+        # Músculo del brazo
+        self.canvas.create_oval(
+            arm_left_x - 30, arm_left_y - 20,
+            arm_left_x, arm_left_y + 20,
+            fill=main_color, outline=dark_color, width=2
+        )
+        
+        # Puño
+        self.canvas.create_oval(
+            arm_left_x - 50, arm_left_y - 20,
+            arm_left_x - 20, arm_left_y + 20,
+            fill=dark_color, outline='#000000', width=2
+        )
+        
+        # Guante/marca del puño
+        self.canvas.create_rectangle(
+            arm_left_x - 45, arm_left_y - 15,
+            arm_left_x - 25, arm_left_y + 15,
+            fill='#666666', outline='#000000', width=1
+        )
+        
+        # Brazo derecho
+        arm_right_x = head_x + body_width + 20
+        arm_right_y = head_y - 20 + arm_lift
+        
+        # Músculo del brazo
+        self.canvas.create_oval(
+            arm_right_x, arm_right_y - 20,
+            arm_right_x + 30, arm_right_y + 20,
+            fill=main_color, outline=dark_color, width=2
+        )
+        
+        # Puño
+        self.canvas.create_oval(
+            arm_right_x + 20, arm_right_y - 20,
+            arm_right_x + 50, arm_right_y + 20,
+            fill=dark_color, outline='#000000', width=2
+        )
+        
+        # Guante/marca del puño
+        self.canvas.create_rectangle(
+            arm_right_x + 25, arm_right_y - 15,
+            arm_right_x + 45, arm_right_y + 15,
+            fill='#666666', outline='#000000', width=1
+        )
+        
+        # ========== CABEZA ==========
+        head_size = 45
+        
+        # Cabeza principal
+        self.canvas.create_oval(
+            head_x - head_size, head_y - head_size - 20,
+            head_x + head_size, head_y + head_size - 20,
+            fill=main_color, outline=dark_color, width=3
+        )
+        
+        # Escamas en la cabeza
+        for i in range(3):
+            scale_y = head_y - head_size + (i * 30)
+            self.canvas.create_arc(
+                head_x - head_size + 10, scale_y - 10,
+                head_x - head_size + 40, scale_y + 10,
+                start=0, extent=180, outline=dark_color, width=1
+            )
+        
+        # Mandíbula/Boca
+        self.canvas.create_arc(
+            head_x - head_size + 5, head_y + 10,
+            head_x + head_size - 5, head_y + head_size,
+            start=0, extent=180, outline='#000000', width=2, fill='#ffcc00'
+        )
+        
+        # Colmillos
+        self.canvas.create_polygon(
+            head_x - 10, head_y + head_size - 10,
+            head_x - 15, head_y + head_size + 10,
+            head_x - 5, head_y + head_size + 5,
+            fill='#ffffff', outline='#000000', width=1
+        )
+        
+        self.canvas.create_polygon(
+            head_x + 10, head_y + head_size - 10,
+            head_x + 5, head_y + head_size + 5,
+            head_x + 15, head_y + head_size + 10,
+            fill='#ffffff', outline='#000000', width=1
+        )
+        
+        # Ojos
+        eye_offset = 20
+        self.canvas.create_oval(
+            head_x - eye_offset - 8, head_y - 30,
+            head_x - eye_offset + 8, head_y - 14,
+            fill='#ffff00', outline='#000000', width=2
+        )
+        
+        self.canvas.create_oval(
+            head_x + eye_offset - 8, head_y - 30,
+            head_x + eye_offset + 8, head_y - 14,
+            fill='#ffff00', outline='#000000', width=2
+        )
+        
+        # Pupila
+        self.canvas.create_oval(
+            head_x - eye_offset - 4, head_y - 26,
+            head_x - eye_offset + 4, head_y - 18,
+            fill='#000000'
+        )
+        
+        self.canvas.create_oval(
+            head_x + eye_offset - 4, head_y - 26,
+            head_x + eye_offset + 4, head_y - 18,
+            fill='#000000'
+        )
+        
+        # ========== CRESTA ROJA ==========
+        crest_y = head_y - head_size - 30
+        for i in range(3):
+            crest_x = head_x - 20 + (i * 20)
+            self.canvas.create_polygon(
+                crest_x, crest_y,
+                crest_x - 10, crest_y - 25,
+                crest_x + 10, crest_y - 25,
+                fill=belt_color, outline='#000000', width=1
+            )
+        
+        # ========== LENGUA ROJA ==========
         if character.is_attacking:
-            tongue_length = 20 + (self.animation_frame % 10)
+            tongue_length = 30 + (self.animation_frame % 15)
+            tongue_y = head_y + head_size
+            
             if character.facing_right:
-                self.canvas.create_line(
-                    head_x + head_size, head_y,
-                    head_x + head_size + tongue_length, head_y,
-                    fill='#ff00ff', width=2
+                # Lengua hacia la derecha
+                self.canvas.create_polygon(
+                    head_x + head_size, tongue_y - 5,
+                    head_x + head_size + tongue_length, tongue_y - 10,
+                    head_x + head_size + tongue_length, tongue_y + 10,
+                    head_x + head_size, tongue_y + 5,
+                    fill=belt_color, outline='#990000', width=2
                 )
             else:
-                self.canvas.create_line(
-                    head_x - head_size, head_y,
-                    head_x - head_size - tongue_length, head_y,
-                    fill='#ff00ff', width=2
+                # Lengua hacia la izquierda
+                self.canvas.create_polygon(
+                    head_x - head_size, tongue_y - 5,
+                    head_x - head_size - tongue_length, tongue_y - 10,
+                    head_x - head_size - tongue_length, tongue_y + 10,
+                    head_x - head_size, tongue_y + 5,
+                    fill=belt_color, outline='#990000', width=2
                 )
         
-        # Efecto de ataque (aura)
+        # ========== AURA DE ATAQUE ==========
         if character.attack_timer > 5:
-            aura_size = head_size + 10
+            aura_size = head_size + 60
             self.canvas.create_oval(
                 head_x - aura_size, head_y - aura_size,
                 head_x + aura_size, head_y + aura_size,
-                outline='#ffff00', width=2
+                outline=accent_color, width=3
             )
+            
+            # Líneas de energía
+            for i in range(3):
+                offset = (self.animation_frame % 20) * 2
+                self.canvas.create_arc(
+                    head_x - aura_size - offset, head_y - aura_size - offset,
+                    head_x + aura_size + offset, head_y + aura_size + offset,
+                    start=0, extent=90, outline=accent_color, width=1
+                )
             
     def _draw_health_bar(self, character, x, y, color):
         """Dibujar barra de salud con estilo arcade"""
