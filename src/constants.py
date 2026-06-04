@@ -5,7 +5,7 @@ import pygame
 # Ventana
 WINDOW_WIDTH = 1024
 WINDOW_HEIGHT = 600
-WINDOW_TITLE = "Street Fighter - Python"
+WINDOW_TITLE = "Street Python Fighter"
 FPS = 60
 
 # Posiciones iniciales
