@@ -1,7 +1,8 @@
-"""Lógica principal del juego con Pygame - Versión final mejorada"""
+"""Lógica principal del juego - Versión con sprites PNG auto-generados"""
 import pygame
 import random
 import math
+import os
 from src.constants import *
 from src.character import Character
 from src.enemy import Enemy
@@ -36,6 +37,168 @@ class Game:
         # Controles
         self.keys = {}
         
+        # Generar sprites
+        self.generate_all_sprites()
+        
+    def create_snake_sprite(self, width=150, height=180, color_scheme='green'):
+        """Crear sprite de serpiente"""
+        surface = pygame.Surface((width, height), pygame.SRCALPHA)
+        
+        if color_scheme == 'green':
+            main = (102, 221, 0)
+            dark = (51, 153, 0)
+            accent = (255, 0, 0)
+        else:
+            main = (255, 153, 0)
+            dark = (204, 102, 0)
+            accent = (0, 100, 255)
+        
+        cx, cy = width // 2, height // 2
+        
+        # Cuerpo
+        pygame.draw.ellipse(surface, (220, 220, 180), (cx - 35, cy - 10, 70, 90))
+        pygame.draw.ellipse(surface, main, (cx - 50, cy - 15, 45, 100))
+        pygame.draw.ellipse(surface, main, (cx + 5, cy - 15, 45, 100))
+        
+        # Músculos
+        pygame.draw.line(surface, dark, (cx - 40, cy + 10), (cx - 20, cy + 10), 3)
+        pygame.draw.line(surface, dark, (cx - 40, cy + 35), (cx - 20, cy + 35), 3)
+        pygame.draw.line(surface, dark, (cx - 40, cy + 60), (cx - 20, cy + 60), 3)
+        pygame.draw.line(surface, dark, (cx + 20, cy + 10), (cx + 40, cy + 10), 3)
+        pygame.draw.line(surface, dark, (cx + 20, cy + 35), (cx + 40, cy + 35), 3)
+        pygame.draw.line(surface, dark, (cx + 20, cy + 60), (cx + 40, cy + 60), 3)
+        
+        # Cinturón
+        pygame.draw.rect(surface, accent, (cx - 40, cy + 60, 80, 15))
+        pygame.draw.rect(surface, (0, 0, 0), (cx - 40, cy + 60, 80, 15), 2)
+        
+        # Piernas
+        pygame.draw.ellipse(surface, main, (cx - 55, cy + 70, 22, 40))
+        pygame.draw.ellipse(surface, dark, (cx - 55, cy + 70, 22, 40), 2)
+        pygame.draw.circle(surface, dark, (cx - 44, cy + 110), 9)
+        pygame.draw.polygon(surface, dark, [(cx - 50, cy + 110), (cx - 44, cy + 120), (cx - 38, cy + 110)])
+        
+        pygame.draw.ellipse(surface, main, (cx + 33, cy + 70, 22, 40))
+        pygame.draw.ellipse(surface, dark, (cx + 33, cy + 70, 22, 40), 2)
+        pygame.draw.circle(surface, dark, (cx + 44, cy + 110), 9)
+        pygame.draw.polygon(surface, dark, [(cx + 38, cy + 110), (cx + 44, cy + 120), (cx + 50, cy + 110)])
+        
+        # Brazos
+        pygame.draw.circle(surface, main, (cx - 55, cy + 15), 11)
+        pygame.draw.line(surface, main, (cx - 55, cy + 15), (cx - 70, cy + 30), 15)
+        pygame.draw.circle(surface, dark, (cx - 70, cy + 30), 12)
+        pygame.draw.circle(surface, (150, 150, 150), (cx - 70, cy + 30), 8)
+        
+        pygame.draw.circle(surface, main, (cx + 55, cy + 15), 11)
+        pygame.draw.line(surface, main, (cx + 55, cy + 15), (cx + 70, cy + 30), 15)
+        pygame.draw.circle(surface, dark, (cx + 70, cy + 30), 12)
+        pygame.draw.circle(surface, (150, 150, 150), (cx + 70, cy + 30), 8)
+        
+        # Cuello
+        pygame.draw.ellipse(surface, main, (cx - 25, cy - 50, 50, 35))
+        pygame.draw.ellipse(surface, dark, (cx - 25, cy - 50, 50, 35), 2)
+        
+        # Cabeza
+        head_y = cy - 100
+        
+        pygame.draw.ellipse(surface, main, (cx - 45, head_y - 25, 90, 65))
+        pygame.draw.ellipse(surface, dark, (cx - 45, head_y - 25, 90, 65), 3)
+        
+        pygame.draw.polygon(surface, main, [(cx - 35, head_y + 35), (cx + 35, head_y + 35), (cx + 38, head_y + 48), (cx - 38, head_y + 48)])
+        pygame.draw.polygon(surface, (220, 220, 180), [(cx - 25, head_y + 24), (cx + 25, head_y + 24), (cx + 22, head_y + 38), (cx - 22, head_y + 38)])
+        
+        pygame.draw.polygon(surface, (255, 255, 255), [(cx - 15, head_y + 24), (cx - 20, head_y + 42), (cx - 10, head_y + 32)])
+        pygame.draw.polygon(surface, (255, 255, 255), [(cx + 15, head_y + 24), (cx + 20, head_y + 42), (cx + 10, head_y + 32)])
+        
+        pygame.draw.line(surface, dark, (cx - 40, head_y - 5), (cx - 15, head_y + 10), 3)
+        pygame.draw.line(surface, dark, (cx + 40, head_y - 5), (cx + 15, head_y + 10), 3)
+        
+        # Ojos
+        pygame.draw.ellipse(surface, (255, 255, 0), (cx - 20, head_y - 15, 26, 18))
+        pygame.draw.ellipse(surface, (0, 0, 0), (cx - 16, head_y - 11, 12, 10))
+        pygame.draw.circle(surface, (255, 255, 0), (cx - 12, head_y - 8), 3)
+        
+        pygame.draw.ellipse(surface, (255, 255, 0), (cx - 6, head_y - 15, 26, 18))
+        pygame.draw.ellipse(surface, (0, 0, 0), (cx - 2, head_y - 11, 12, 10))
+        pygame.draw.circle(surface, (255, 255, 0), (cx + 2, head_y - 8), 3)
+        
+        pygame.draw.polygon(surface, dark, [(cx, head_y - 2), (cx - 5, head_y + 5), (cx + 5, head_y + 5)])
+        
+        # Cresta
+        crest_y = head_y - 28
+        for i in range(5):
+            crest_x = cx - 30 + (i * 15)
+            pygame.draw.polygon(surface, accent, [(crest_x, crest_y), (crest_x - 8, crest_y - 20), (crest_x + 8, crest_y - 20)])
+            pygame.draw.line(surface, (0, 0, 0), (crest_x - 8, crest_y - 20), (crest_x + 8, crest_y - 20), 2)
+        
+        return surface
+    
+    def create_punch_sprite(self, width=150, height=180, color_scheme='green'):
+        """Crear sprite de serpiente con puño extendido"""
+        surface = self.create_snake_sprite(width, height, color_scheme)
+        
+        if color_scheme == 'green':
+            main = (102, 221, 0)
+            dark = (51, 153, 0)
+        else:
+            main = (255, 153, 0)
+            dark = (204, 102, 0)
+        
+        cx, cy = width // 2, height // 2
+        
+        pygame.draw.line(surface, main, (cx + 55, cy + 15), (cx + 90, cy + 35), 18)
+        pygame.draw.circle(surface, dark, (cx + 90, cy + 35), 14)
+        pygame.draw.circle(surface, (150, 150, 150), (cx + 90, cy + 35), 10)
+        
+        return surface
+    
+    def create_kick_sprite(self, width=150, height=180, color_scheme='green'):
+        """Crear sprite de serpiente pateando"""
+        surface = self.create_snake_sprite(width, height, color_scheme)
+        
+        if color_scheme == 'green':
+            main = (102, 221, 0)
+            dark = (51, 153, 0)
+        else:
+            main = (255, 153, 0)
+            dark = (204, 102, 0)
+        
+        cx, cy = width // 2, height // 2
+        
+        pygame.draw.ellipse(surface, main, (cx + 35, cy + 65, 20, 50))
+        pygame.draw.ellipse(surface, dark, (cx + 35, cy + 65, 20, 50), 2)
+        pygame.draw.circle(surface, dark, (cx + 45, cy + 115), 11)
+        pygame.draw.polygon(surface, dark, [(cx + 40, cy + 115), (cx + 45, cy + 130), (cx + 50, cy + 115)])
+        
+        return surface
+    
+    def generate_all_sprites(self):
+        """Generar todos los sprites en memoria"""
+        print("Generando sprites...")
+        
+        self.sprites = {
+            'player_idle': self.create_snake_sprite(150, 180, 'green'),
+            'player_punch': self.create_punch_sprite(150, 180, 'green'),
+            'player_kick': self.create_kick_sprite(150, 180, 'green'),
+            'enemy_idle': self.create_snake_sprite(150, 180, 'orange'),
+            'enemy_punch': self.create_punch_sprite(150, 180, 'orange'),
+            'enemy_kick': self.create_kick_sprite(150, 180, 'orange'),
+        }
+        
+        print("✅ Sprites generados en memoria")
+    
+    def get_sprite(self, character, is_player):
+        """Obtener sprite correcto según estado"""
+        prefix = 'player' if is_player else 'enemy'
+        
+        if character.is_attacking:
+            if character.attack_type == 'kick':
+                return self.sprites.get(f'{prefix}_kick', self.sprites.get(f'{prefix}_idle'))
+            else:
+                return self.sprites.get(f'{prefix}_punch', self.sprites.get(f'{prefix}_idle'))
+        
+        return self.sprites.get(f'{prefix}_idle')
+    
     def handle_input(self):
         """Procesar entrada"""
         for event in pygame.event.get():
@@ -63,14 +226,17 @@ class Game:
         """Verificar si los ataques conectan"""
         distance = abs(self.player.x - self.enemy.x)
         
-        if self.player.is_attacking and distance < PUNCH_RANGE:
+        player_attack_range = PUNCH_RANGE if self.player.attack_type == 'punch' else KICK_RANGE
+        enemy_attack_range = PUNCH_RANGE if self.enemy.attack_type == 'punch' else KICK_RANGE
+        
+        if self.player.is_attacking and distance < player_attack_range:
             if not self.player.attack_damage_dealt:
                 damage = PUNCH_DAMAGE if self.player.attack_type == 'punch' else KICK_DAMAGE
                 self.enemy.take_damage(damage)
                 self.player.attack_damage_dealt = True
-                print(f"¡Golpe! Daño: {damage}")
+                print(f"¡Golpe del jugador! Daño: {damage}")
             
-        if self.enemy.is_attacking and distance < PUNCH_RANGE:
+        if self.enemy.is_attacking and distance < enemy_attack_range:
             if not self.enemy.attack_damage_dealt:
                 damage = PUNCH_DAMAGE if self.enemy.attack_type == 'punch' else KICK_DAMAGE
                 self.player.take_damage(damage)
@@ -91,7 +257,6 @@ class Game:
         self.player.update()
         self.enemy.update(self.player)
         
-        # Actualizar dirección
         if self.enemy.x < self.player.x:
             self.player.facing_right = False
         else:
@@ -111,331 +276,12 @@ class Game:
         elif not self.enemy.is_alive():
             self.game_over = True
             self.winner = "PLAYER"
-
-    def draw_detailed_snake(self, character, is_player):
-        """Dibujar serpiente mejorada con animaciones detalladas"""
-        x = int(character.x)
-        y = int(character.y)
-        facing_right = character.facing_right
-        
-        # Colores
-        if is_player:
-            main_color = (102, 221, 0)
-            dark_color = (51, 153, 0)
-            light_color = (153, 255, 0)
-            accent = (255, 0, 0)
-            belt_color = (255, 0, 0)
-            skin = (200, 200, 150)
-            muscle_highlight = (200, 255, 100)
-        else:
-            main_color = (255, 153, 0)
-            dark_color = (204, 102, 0)
-            light_color = (255, 200, 100)
-            accent = (0, 100, 255)
-            belt_color = (0, 100, 255)
-            skin = (220, 180, 120)
-            muscle_highlight = (255, 220, 150)
-        
-        # ========== ANIMACIÓN BASE ==========
-        walk_cycle = self.animation_frame % 40
-        
-        # Movimiento de piernas (alternancia)
-        left_leg_offset = math.sin(walk_cycle * math.pi / 20) * 8
-        right_leg_offset = math.sin((walk_cycle + 20) * math.pi / 20) * 8
-        
-        # Movimiento de brazos (opuesto a piernas)
-        left_arm_swing = math.sin(walk_cycle * math.pi / 20) * 10
-        right_arm_swing = math.sin((walk_cycle + 20) * math.pi / 20) * 10
-        
-        # ========== COLA (lado opuesto) ==========
-        tail_dir = -1 if facing_right else 1
-        tail_x = x + (100 * tail_dir)
-        
-        for i in range(10):
-            seg_x = tail_x + (tail_dir * i * 20)
-            tail_wave = math.sin(self.animation_frame * 0.2 + i * 0.5) * 15
-            seg_y = y + 50 + tail_wave
-            radius = 16 - (i * 1.5)
-            
-            if radius > 2:
-                pygame.draw.circle(self.screen, main_color, (int(seg_x), int(seg_y)), int(radius))
-                pygame.draw.circle(self.screen, dark_color, (int(seg_x), int(seg_y)), int(radius), 2)
-        
-        # ========== PATAS ==========
-        # Pata trasera izquierda (se mueve con pierna izquierda)
-        pata_iz_x = x - 55
-        pata_iz_y = y + 55 + left_leg_offset
-        
-        # Muslo
-        pygame.draw.ellipse(self.screen, main_color, (pata_iz_x - 12, pata_iz_y - 15, 25, 40))
-        pygame.draw.ellipse(self.screen, dark_color, (pata_iz_x - 12, pata_iz_y - 15, 25, 40), 2)
-        
-        # Pantorrilla
-        pantorrilla_y = pata_iz_y + 25
-        pygame.draw.ellipse(self.screen, main_color, (pata_iz_x - 10, pantorrilla_y, 20, 35))
-        pygame.draw.ellipse(self.screen, dark_color, (pata_iz_x - 10, pantorrilla_y, 20, 35), 2)
-        
-        # Pie/garra
-        pie_y = pantorrilla_y + 35
-        pygame.draw.circle(self.screen, dark_color, (int(pata_iz_x), int(pie_y)), 10)
-        pygame.draw.polygon(self.screen, dark_color, [
-            (pata_iz_x - 12, pie_y),
-            (pata_iz_x - 8, pie_y + 12),
-            (pata_iz_x + 4, pie_y + 10),
-            (pata_iz_x + 12, pie_y + 8)
-        ])
-        
-        # Pata trasera derecha (se mueve con pierna derecha)
-        pata_der_x = x + 55
-        pata_der_y = y + 55 + right_leg_offset
-        
-        # Muslo
-        pygame.draw.ellipse(self.screen, main_color, (pata_der_x - 12, pata_der_y - 15, 25, 40))
-        pygame.draw.ellipse(self.screen, dark_color, (pata_der_x - 12, pata_der_y - 15, 25, 40), 2)
-        
-        # Pantorrilla
-        pantorrilla_y = pata_der_y + 25
-        pygame.draw.ellipse(self.screen, main_color, (pata_der_x - 10, pantorrilla_y, 20, 35))
-        pygame.draw.ellipse(self.screen, dark_color, (pata_der_x - 10, pantorrilla_y, 20, 35), 2)
-        
-        # Pie/garra
-        pie_y = pantorrilla_y + 35
-        pygame.draw.circle(self.screen, dark_color, (int(pata_der_x), int(pie_y)), 10)
-        pygame.draw.polygon(self.screen, dark_color, [
-            (pata_der_x - 12, pie_y),
-            (pata_der_x - 8, pie_y + 12),
-            (pata_der_x + 4, pie_y + 10),
-            (pata_der_x + 12, pie_y + 8)
-        ])
-        
-        # ========== CUERPO ==========
-        # Vientre claro
-        pygame.draw.ellipse(self.screen, skin, (x - 38, y - 20, 76, 100))
-        
-        # Lado izquierdo del cuerpo
-        pygame.draw.ellipse(self.screen, main_color, (x - 52, y - 25, 48, 110))
-        pygame.draw.ellipse(self.screen, muscle_highlight, (x - 50, y - 15, 16, 90))
-        
-        # Lado derecho del cuerpo
-        pygame.draw.ellipse(self.screen, main_color, (x + 4, y - 25, 48, 110))
-        pygame.draw.ellipse(self.screen, muscle_highlight, (x + 34, y - 15, 16, 90))
-        
-        # Detalles musculares
-        for i in range(4):
-            y_off = y - 10 + (i * 25)
-            pygame.draw.line(self.screen, dark_color, (x - 40, y_off), (x - 20, y_off), 3)
-            pygame.draw.line(self.screen, dark_color, (x + 20, y_off), (x + 40, y_off), 3)
-        
-        # ========== CINTURÓN ==========
-        pygame.draw.rect(self.screen, belt_color, (x - 48, y + 35, 96, 22))
-        pygame.draw.rect(self.screen, (0, 0, 0), (x - 48, y + 35, 96, 22), 3)
-        
-        label = "P1" if is_player else "CPU"
-        label_text = self.font_tiny.render(label, True, (255, 255, 0))
-        self.screen.blit(label_text, (x - 10, y + 40))
-        
-        # ========== BRAZOS DETALLADOS ==========
-        arm_attack_lift = 0
-        arm_attack_extend = 0
-        
-        if character.is_attacking:
-            frame_attack = character.attack_timer
-            arm_attack_lift = -20 + (frame_attack * 2)
-            if character.attack_type == 'punch':
-                arm_attack_extend = (10 - frame_attack) * 8
-            else:
-                arm_attack_extend = (10 - frame_attack) * 12
-        
-        # BRAZO IZQUIERDO
-        brazo_iz_x = x - 58
-        brazo_iz_y = y - 20 + arm_attack_lift
-        
-        if facing_right:
-            brazo_iz_swing = left_arm_swing * 0.5  # Menor movimiento en brazo trasero
-            brazo_iz_x += brazo_iz_swing
-        else:
-            brazo_iz_swing = left_arm_swing * 1.2  # Mayor movimiento en brazo delantero
-            brazo_iz_x += brazo_iz_swing
-        
-        # Hombro
-        pygame.draw.circle(self.screen, main_color, (int(brazo_iz_x), int(brazo_iz_y)), 12)
-        
-        # Bíceps/muslo superior
-        biceps_end_x = brazo_iz_x - 20 - arm_attack_extend
-        biceps_end_y = brazo_iz_y + 15
-        pygame.draw.line(self.screen, main_color, (brazo_iz_x, brazo_iz_y), 
-                        (biceps_end_x, biceps_end_y), 18)
-        pygame.draw.line(self.screen, muscle_highlight, (brazo_iz_x, brazo_iz_y), 
-                        (biceps_end_x, biceps_end_y), 8)
-        
-        # Codo
-        pygame.draw.circle(self.screen, dark_color, (int(biceps_end_x), int(biceps_end_y)), 10)
-        
-        # Antebrazo
-        antebrazo_end_x = biceps_end_x - 20 - arm_attack_extend
-        antebrazo_end_y = biceps_end_y + 20
-        pygame.draw.line(self.screen, main_color, (biceps_end_x, biceps_end_y), 
-                        (antebrazo_end_x, antebrazo_end_y), 15)
-        
-        # Puño grande
-        pygame.draw.circle(self.screen, dark_color, (int(antebrazo_end_x), int(antebrazo_end_y)), 14)
-        pygame.draw.circle(self.screen, (150, 150, 150), (int(antebrazo_end_x), int(antebrazo_end_y)), 10)
-        
-        # BRAZO DERECHO
-        brazo_der_x = x + 58
-        brazo_der_y = y - 20 + arm_attack_lift
-        
-        if facing_right:
-            brazo_der_swing = right_arm_swing * 1.2  # Mayor movimiento en brazo delantero
-            brazo_der_x += brazo_der_swing
-        else:
-            brazo_der_swing = right_arm_swing * 0.5  # Menor movimiento en brazo trasero
-            brazo_der_x += brazo_der_swing
-        
-        # Hombro
-        pygame.draw.circle(self.screen, main_color, (int(brazo_der_x), int(brazo_der_y)), 12)
-        
-        # Bíceps
-        biceps_end_x = brazo_der_x + 20 + arm_attack_extend
-        biceps_end_y = brazo_der_y + 15
-        pygame.draw.line(self.screen, main_color, (brazo_der_x, brazo_der_y), 
-                        (biceps_end_x, biceps_end_y), 18)
-        pygame.draw.line(self.screen, muscle_highlight, (brazo_der_x, brazo_der_y), 
-                        (biceps_end_x, biceps_end_y), 8)
-        
-        # Codo
-        pygame.draw.circle(self.screen, dark_color, (int(biceps_end_x), int(biceps_end_y)), 10)
-        
-        # Antebrazo
-        antebrazo_end_x = biceps_end_x + 20 + arm_attack_extend
-        antebrazo_end_y = biceps_end_y + 20
-        pygame.draw.line(self.screen, main_color, (biceps_end_x, biceps_end_y), 
-                        (antebrazo_end_x, antebrazo_end_y), 15)
-        
-        # Puño grande
-        pygame.draw.circle(self.screen, dark_color, (int(antebrazo_end_x), int(antebrazo_end_y)), 14)
-        pygame.draw.circle(self.screen, (150, 150, 150), (int(antebrazo_end_x), int(antebrazo_end_y)), 10)
-        
-        # ========== CUELLO ==========
-        pygame.draw.ellipse(self.screen, main_color, (x - 28, y - 90, 56, 35))
-        pygame.draw.ellipse(self.screen, dark_color, (x - 28, y - 90, 56, 35), 2)
-        
-        # ========== CABEZA ==========
-        head_x = x
-        head_y = y - 115
-        
-        # Cráneo
-        pygame.draw.ellipse(self.screen, main_color, (head_x - 48, head_y - 30, 96, 70))
-        pygame.draw.ellipse(self.screen, dark_color, (head_x - 48, head_y - 30, 96, 70), 3)
-        
-        # Mandíbula
-        pygame.draw.polygon(self.screen, main_color, [
-            (head_x - 38, head_y + 30),
-            (head_x + 38, head_y + 30),
-            (head_x + 42, head_y + 45),
-            (head_x - 42, head_y + 45)
-        ])
-        
-        # Paladar/boca
-        pygame.draw.polygon(self.screen, skin, [
-            (head_x - 28, head_y + 18),
-            (head_x + 28, head_y + 18),
-            (head_x + 24, head_y + 35),
-            (head_x - 24, head_y + 35)
-        ])
-        
-        # Colmillos superiores
-        pygame.draw.polygon(self.screen, (255, 255, 255), [
-            (head_x - 16, head_y + 18),
-            (head_x - 20, head_y + 40),
-            (head_x - 12, head_y + 28)
-        ])
-        
-        pygame.draw.polygon(self.screen, (255, 255, 255), [
-            (head_x + 16, head_y + 18),
-            (head_x + 20, head_y + 40),
-            (head_x + 12, head_y + 28)
-        ])
-        
-        # Escamas faciales
-        pygame.draw.line(self.screen, dark_color, (head_x - 40, head_y - 5), (head_x - 15, head_y + 5), 3)
-        pygame.draw.line(self.screen, dark_color, (head_x + 40, head_y - 5), (head_x + 15, head_y + 5), 3)
-        pygame.draw.line(self.screen, dark_color, (head_x - 45, head_y + 10), (head_x - 20, head_y + 15), 2)
-        pygame.draw.line(self.screen, dark_color, (head_x + 45, head_y + 10), (head_x + 20, head_y + 15), 2)
-        
-        # OJOS
-        if facing_right:
-            eye_left_x = head_x - 18
-            eye_right_x = head_x + 18
-        else:
-            eye_left_x = head_x - 18
-            eye_right_x = head_x + 18
-        
-        eye_y = head_y - 15
-        
-        # Ojo izquierdo
-        pygame.draw.ellipse(self.screen, (255, 255, 0), (eye_left_x - 14, eye_y - 10, 28, 20))
-        pygame.draw.ellipse(self.screen, (0, 0, 0), (eye_left_x - 10, eye_y - 6, 14, 12))
-        pygame.draw.circle(self.screen, (255, 255, 0), (eye_left_x - 5, eye_y - 2), 4)
-        
-        # Ojo derecho
-        pygame.draw.ellipse(self.screen, (255, 255, 0), (eye_right_x - 14, eye_y - 10, 28, 20))
-        pygame.draw.ellipse(self.screen, (0, 0, 0), (eye_right_x - 10, eye_y - 6, 14, 12))
-        pygame.draw.circle(self.screen, (255, 255, 0), (eye_right_x - 5, eye_y - 2), 4)
-        
-        # Nariz
-        pygame.draw.polygon(self.screen, dark_color, [
-            (head_x, head_y),
-            (head_x - 6, head_y + 8),
-            (head_x + 6, head_y + 8)
-        ])
-        
-        # ========== CRESTA ROJA ==========
-        crest_y = head_y - 32
-        for i in range(5):
-            crest_x = head_x - 30 + (i * 15)
-            pygame.draw.polygon(self.screen, accent, [
-                (crest_x, crest_y),
-                (crest_x - 9, crest_y - 22),
-                (crest_x + 9, crest_y - 22)
-            ])
-            pygame.draw.line(self.screen, (0, 0, 0), 
-                            (crest_x - 9, crest_y - 22),
-                            (crest_x + 9, crest_y - 22), 2)
-        
-        # ========== LENGUA ANIMADA ==========
-        if character.is_attacking:
-            tongue_length = 40 + (self.animation_frame % 15) * 3
-            tongue_y = head_y + 40
-            
-            tongue_dir = 1 if facing_right else -1
-            
-            pygame.draw.polygon(self.screen, accent, [
-                (head_x + (45 * tongue_dir), tongue_y - 10),
-                (head_x + ((45 + tongue_length) * tongue_dir), tongue_y - 15),
-                (head_x + ((45 + tongue_length) * tongue_dir), tongue_y + 15),
-                (head_x + (45 * tongue_dir), tongue_y + 10)
-            ])
-        
-        # ========== AURA ==========
-        if character.attack_timer > 5:
-            aura_radius = 130 + (self.animation_frame % 10) * 2
-            pygame.draw.circle(self.screen, (255, 255, 0), (head_x, head_y - 30), aura_radius, 4)
-            
-            for i in range(12):
-                angle = (i * 30 + self.animation_frame * 8) * math.pi / 180
-                length = 140 + (self.animation_frame % 5) * 5
-                end_x = head_x + length * math.cos(angle)
-                end_y = head_y - 30 + length * math.sin(angle)
-                pygame.draw.line(self.screen, (255, 255, 0), 
-                               (head_x, head_y - 30), 
-                               (int(end_x), int(end_y)), 2)
-            
+    
     def draw(self):
         """Dibujar pantalla"""
         self.screen.fill(DARK_BG)
         
-        # Fondo con edificios
+        # Fondo
         for i in range(0, WINDOW_WIDTH, 120):
             pygame.draw.rect(self.screen, (30, 30, 50), (i, 0, 100, 120))
             pygame.draw.line(self.screen, (60, 60, 100), (i, 0), (i, 120), 2)
@@ -449,10 +295,10 @@ class Game:
                         (WINDOW_WIDTH // 2, WINDOW_HEIGHT - 50), 3)
         
         # Personajes
-        self.draw_detailed_snake(self.player, True)
-        self.draw_detailed_snake(self.enemy, False)
+        self.draw_sprite_character(self.player, True)
+        self.draw_sprite_character(self.enemy, False)
         
-        # UI - Nombres
+        # UI
         player_name = self.font_medium.render("SNAKE-KYU", True, GREEN)
         self.screen.blit(player_name, (20, 15))
         
@@ -460,7 +306,6 @@ class Game:
         enemy_name_rect = enemy_name.get_rect()
         self.screen.blit(enemy_name, (WINDOW_WIDTH - enemy_name_rect.width - 20, 15))
         
-        # Round
         round_text = self.font_large.render(f"ROUND {self.round_number}", True, RED)
         round_rect = round_text.get_rect(center=(WINDOW_WIDTH // 2, 35))
         self.screen.blit(round_text, round_rect)
@@ -469,7 +314,6 @@ class Game:
         bar_width = 280
         bar_height = 28
         
-        # Player
         pygame.draw.rect(self.screen, RED, (15, 90, bar_width, bar_height))
         fill = bar_width * (self.player.health / HEALTH_MAX)
         pygame.draw.rect(self.screen, GREEN, (15, 90, fill, bar_height))
@@ -478,7 +322,6 @@ class Game:
         player_hp_text = self.font_small.render(f"{int(self.player.health)}/{HEALTH_MAX}", True, WHITE)
         self.screen.blit(player_hp_text, (30, 95))
         
-        # Enemy
         pygame.draw.rect(self.screen, RED, (WINDOW_WIDTH - 15 - bar_width, 90, bar_width, bar_height))
         fill = bar_width * (self.enemy.health / HEALTH_MAX)
         pygame.draw.rect(self.screen, (255, 150, 0), 
@@ -489,16 +332,11 @@ class Game:
         enemy_hp_rect = enemy_hp_text.get_rect()
         self.screen.blit(enemy_hp_text, (WINDOW_WIDTH - 30 - enemy_hp_rect.width, 95))
         
-        # Pantalla inicio
         if self.round_start:
             fight_text = self.font_title.render("FIGHT!", True, RED)
             text_rect = fight_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
-            # Efecto de pulso
-            pulse = 1 + math.sin(self.round_start_timer * 0.1) * 0.1
-            scaled_rect = text_rect.copy()
             self.screen.blit(fight_text, text_rect)
         
-        # Pantalla fin
         if self.game_over:
             overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
             overlay.set_alpha(190)
@@ -519,6 +357,23 @@ class Game:
             self.screen.blit(restart, restart_rect)
         
         pygame.display.flip()
+    
+    def draw_sprite_character(self, character, is_player):
+        """Dibujar personaje con sprite"""
+        sprite = self.get_sprite(character, is_player)
+        
+        x = int(character.x)
+        y = int(character.y)
+        
+        if not character.facing_right:
+            sprite = pygame.transform.flip(sprite, True, False)
+        
+        rect = sprite.get_rect(center=(x, y))
+        self.screen.blit(sprite, rect)
+        
+        if character.attack_timer > 5:
+            aura_radius = 130 + (self.animation_frame % 10) * 2
+            pygame.draw.circle(self.screen, (255, 255, 0), (x, y), aura_radius, 3)
         
     def run(self):
         """Loop principal"""
