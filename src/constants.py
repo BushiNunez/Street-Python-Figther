@@ -1,35 +1,42 @@
 """Constantes globales del juego"""
+import pygame
+
 
 # Ventana
-WINDOW_WIDTH = 800
+WINDOW_WIDTH = 1024
 WINDOW_HEIGHT = 600
 WINDOW_TITLE = "Street Fighter - Python"
-FPS = 20
+FPS = 60
 
 # Posiciones iniciales
-PLAYER_X = 100
-ENEMY_X = 700
-CHARACTER_Y = WINDOW_HEIGHT - 150
+PLAYER_X = 200
+ENEMY_X = 800
+CHARACTER_Y = 400
 
-# Estadísticas de personajes
+# Estadísticas
 HEALTH_MAX = 100
 PUNCH_DAMAGE = 10
 KICK_DAMAGE = 15
-PUNCH_RANGE = 80
-KICK_RANGE = 100
+PUNCH_RANGE = 100
+KICK_RANGE = 120
 
 # Movimiento
-MOVE_SPEED = 15
+MOVE_SPEED = 5
 MOVE_RANGE_MIN = 50
 MOVE_RANGE_MAX = WINDOW_WIDTH - 50
 
-# IA del enemigo
+# IA
 ENEMY_ACTION_MIN = 15
 ENEMY_ACTION_MAX = 40
-ENEMY_DISTANCE_CHASE = 150
-ENEMY_DISTANCE_ATTACK = 80
+ENEMY_DISTANCE_CHASE = 200
+ENEMY_DISTANCE_ATTACK = 100
 
-# ========== ANIMACIÓN ==========
-ANIMATION_SPEED = 5  # Velocidad de la animación (frames)
-SNAKE_SEGMENTS = 5   # Cantidad de segmentos de la serpiente
-SEGMENT_SIZE = 15    # Tamaño de cada segmento
+# Colores
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+YELLOW = (255, 255, 0)
+BLUE = (0, 0, 255)
+PURPLE = (128, 0, 255)
+DARK_BG = (10, 14, 42)

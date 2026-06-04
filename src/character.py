@@ -1,21 +1,24 @@
 """Clase base para personajes del juego"""
+import pygame
 from src.constants import *
 
 class Character:
     """Clase base para jugador y enemigo"""
     
-    def __init__(self, x, y, color, is_player=True):
+    def __init__(self, x, y, is_player=True):
         self.x = x
         self.y = y
-        self.color = '#00ff41'
         self.health = HEALTH_MAX
         self.is_attacking = False
         self.attack_type = None
         self.is_player = is_player
         self.facing_right = not is_player
-        self.size = 40
-        self.attack_timer = 0  # ← NUEVO: Contador para duración del ataque
-        self.attack_damage_dealt = False  # ← NUEVO: Evitar daño múltiple
+        
+        self.attack_timer = 0
+        self.attack_damage_dealt = False
+        
+        self.width = 100
+        self.height = 120
         
     def take_damage(self, damage):
         """Recibir daño"""
@@ -26,7 +29,7 @@ class Character:
         if not self.is_attacking:
             self.is_attacking = True
             self.attack_type = 'punch'
-            self.attack_timer = 10  # ← NUEVO: Dura 10 frames (~500ms)
+            self.attack_timer = 10
             self.attack_damage_dealt = False
     
     def kick(self):
@@ -34,7 +37,7 @@ class Character:
         if not self.is_attacking:
             self.is_attacking = True
             self.attack_type = 'kick'
-            self.attack_timer = 10  # ← NUEVO: Dura 10 frames (~500ms)
+            self.attack_timer = 10
             self.attack_damage_dealt = False
             
     def move_left(self):
@@ -58,3 +61,7 @@ class Character:
     def is_alive(self):
         """Verificar si el personaje está vivo"""
         return self.health > 0
+    
+    def draw(self, screen, animation_frame):
+        """Dibujar el personaje (sobrescribir en subclases)"""
+        pass
