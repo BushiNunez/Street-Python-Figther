@@ -1,8 +1,9 @@
-"""Lógica principal del juego - Versión con sprites PNG auto-generados"""
+"""Lógica principal del juego - Versión con imágenes PNG cargadas"""
 import pygame
 import random
 import math
 import os
+import subprocess
 from src.constants import *
 from src.character import Character
 from src.enemy import Enemy
@@ -37,155 +38,42 @@ class Game:
         # Controles
         self.keys = {}
         
-        # Generar sprites
-        self.generate_all_sprites()
+        # Cargar o generar sprites
+        self.load_sprites()
         
-    def create_snake_sprite(self, width=150, height=180, color_scheme='green'):
-        """Crear sprite de serpiente"""
-        surface = pygame.Surface((width, height), pygame.SRCALPHA)
+    def load_sprites(self):
+        """Cargar sprites PNG desde archivos"""
+        sprite_dir = 'assets/sprites'
         
-        if color_scheme == 'green':
-            main = (102, 221, 0)
-            dark = (51, 153, 0)
-            accent = (255, 0, 0)
-        else:
-            main = (255, 153, 0)
-            dark = (204, 102, 0)
-            accent = (0, 100, 255)
+        # Verificar si existen los sprites
+        if not os.path.exists(f'{sprite_dir}/snake_green_idle.png'):
+            print("Generando imágenes PNG de alta calidad...")
+            print("Esto puede tomar un momento...")
+            
+            # Generar imágenes
+            try:
+                subprocess.run(['python3', 'assets/generate_images.py'], check=True)
+                print("✅ Imágenes generadas correctamente")
+            except:
+                print("⚠️ No se pudieron generar las imágenes")
+                print("Instala PIL: pip install Pillow --break-system-packages")
+                return
         
-        cx, cy = width // 2, height // 2
+        # Cargar sprites
+        self.sprites = {}
         
-        # Cuerpo
-        pygame.draw.ellipse(surface, (220, 220, 180), (cx - 35, cy - 10, 70, 90))
-        pygame.draw.ellipse(surface, main, (cx - 50, cy - 15, 45, 100))
-        pygame.draw.ellipse(surface, main, (cx + 5, cy - 15, 45, 100))
-        
-        # Músculos
-        pygame.draw.line(surface, dark, (cx - 40, cy + 10), (cx - 20, cy + 10), 3)
-        pygame.draw.line(surface, dark, (cx - 40, cy + 35), (cx - 20, cy + 35), 3)
-        pygame.draw.line(surface, dark, (cx - 40, cy + 60), (cx - 20, cy + 60), 3)
-        pygame.draw.line(surface, dark, (cx + 20, cy + 10), (cx + 40, cy + 10), 3)
-        pygame.draw.line(surface, dark, (cx + 20, cy + 35), (cx + 40, cy + 35), 3)
-        pygame.draw.line(surface, dark, (cx + 20, cy + 60), (cx + 40, cy + 60), 3)
-        
-        # Cinturón
-        pygame.draw.rect(surface, accent, (cx - 40, cy + 60, 80, 15))
-        pygame.draw.rect(surface, (0, 0, 0), (cx - 40, cy + 60, 80, 15), 2)
-        
-        # Piernas
-        pygame.draw.ellipse(surface, main, (cx - 55, cy + 70, 22, 40))
-        pygame.draw.ellipse(surface, dark, (cx - 55, cy + 70, 22, 40), 2)
-        pygame.draw.circle(surface, dark, (cx - 44, cy + 110), 9)
-        pygame.draw.polygon(surface, dark, [(cx - 50, cy + 110), (cx - 44, cy + 120), (cx - 38, cy + 110)])
-        
-        pygame.draw.ellipse(surface, main, (cx + 33, cy + 70, 22, 40))
-        pygame.draw.ellipse(surface, dark, (cx + 33, cy + 70, 22, 40), 2)
-        pygame.draw.circle(surface, dark, (cx + 44, cy + 110), 9)
-        pygame.draw.polygon(surface, dark, [(cx + 38, cy + 110), (cx + 44, cy + 120), (cx + 50, cy + 110)])
-        
-        # Brazos
-        pygame.draw.circle(surface, main, (cx - 55, cy + 15), 11)
-        pygame.draw.line(surface, main, (cx - 55, cy + 15), (cx - 70, cy + 30), 15)
-        pygame.draw.circle(surface, dark, (cx - 70, cy + 30), 12)
-        pygame.draw.circle(surface, (150, 150, 150), (cx - 70, cy + 30), 8)
-        
-        pygame.draw.circle(surface, main, (cx + 55, cy + 15), 11)
-        pygame.draw.line(surface, main, (cx + 55, cy + 15), (cx + 70, cy + 30), 15)
-        pygame.draw.circle(surface, dark, (cx + 70, cy + 30), 12)
-        pygame.draw.circle(surface, (150, 150, 150), (cx + 70, cy + 30), 8)
-        
-        # Cuello
-        pygame.draw.ellipse(surface, main, (cx - 25, cy - 50, 50, 35))
-        pygame.draw.ellipse(surface, dark, (cx - 25, cy - 50, 50, 35), 2)
-        
-        # Cabeza
-        head_y = cy - 100
-        
-        pygame.draw.ellipse(surface, main, (cx - 45, head_y - 25, 90, 65))
-        pygame.draw.ellipse(surface, dark, (cx - 45, head_y - 25, 90, 65), 3)
-        
-        pygame.draw.polygon(surface, main, [(cx - 35, head_y + 35), (cx + 35, head_y + 35), (cx + 38, head_y + 48), (cx - 38, head_y + 48)])
-        pygame.draw.polygon(surface, (220, 220, 180), [(cx - 25, head_y + 24), (cx + 25, head_y + 24), (cx + 22, head_y + 38), (cx - 22, head_y + 38)])
-        
-        pygame.draw.polygon(surface, (255, 255, 255), [(cx - 15, head_y + 24), (cx - 20, head_y + 42), (cx - 10, head_y + 32)])
-        pygame.draw.polygon(surface, (255, 255, 255), [(cx + 15, head_y + 24), (cx + 20, head_y + 42), (cx + 10, head_y + 32)])
-        
-        pygame.draw.line(surface, dark, (cx - 40, head_y - 5), (cx - 15, head_y + 10), 3)
-        pygame.draw.line(surface, dark, (cx + 40, head_y - 5), (cx + 15, head_y + 10), 3)
-        
-        # Ojos
-        pygame.draw.ellipse(surface, (255, 255, 0), (cx - 20, head_y - 15, 26, 18))
-        pygame.draw.ellipse(surface, (0, 0, 0), (cx - 16, head_y - 11, 12, 10))
-        pygame.draw.circle(surface, (255, 255, 0), (cx - 12, head_y - 8), 3)
-        
-        pygame.draw.ellipse(surface, (255, 255, 0), (cx - 6, head_y - 15, 26, 18))
-        pygame.draw.ellipse(surface, (0, 0, 0), (cx - 2, head_y - 11, 12, 10))
-        pygame.draw.circle(surface, (255, 255, 0), (cx + 2, head_y - 8), 3)
-        
-        pygame.draw.polygon(surface, dark, [(cx, head_y - 2), (cx - 5, head_y + 5), (cx + 5, head_y + 5)])
-        
-        # Cresta
-        crest_y = head_y - 28
-        for i in range(5):
-            crest_x = cx - 30 + (i * 15)
-            pygame.draw.polygon(surface, accent, [(crest_x, crest_y), (crest_x - 8, crest_y - 20), (crest_x + 8, crest_y - 20)])
-            pygame.draw.line(surface, (0, 0, 0), (crest_x - 8, crest_y - 20), (crest_x + 8, crest_y - 20), 2)
-        
-        return surface
-    
-    def create_punch_sprite(self, width=150, height=180, color_scheme='green'):
-        """Crear sprite de serpiente con puño extendido"""
-        surface = self.create_snake_sprite(width, height, color_scheme)
-        
-        if color_scheme == 'green':
-            main = (102, 221, 0)
-            dark = (51, 153, 0)
-        else:
-            main = (255, 153, 0)
-            dark = (204, 102, 0)
-        
-        cx, cy = width // 2, height // 2
-        
-        pygame.draw.line(surface, main, (cx + 55, cy + 15), (cx + 90, cy + 35), 18)
-        pygame.draw.circle(surface, dark, (cx + 90, cy + 35), 14)
-        pygame.draw.circle(surface, (150, 150, 150), (cx + 90, cy + 35), 10)
-        
-        return surface
-    
-    def create_kick_sprite(self, width=150, height=180, color_scheme='green'):
-        """Crear sprite de serpiente pateando"""
-        surface = self.create_snake_sprite(width, height, color_scheme)
-        
-        if color_scheme == 'green':
-            main = (102, 221, 0)
-            dark = (51, 153, 0)
-        else:
-            main = (255, 153, 0)
-            dark = (204, 102, 0)
-        
-        cx, cy = width // 2, height // 2
-        
-        pygame.draw.ellipse(surface, main, (cx + 35, cy + 65, 20, 50))
-        pygame.draw.ellipse(surface, dark, (cx + 35, cy + 65, 20, 50), 2)
-        pygame.draw.circle(surface, dark, (cx + 45, cy + 115), 11)
-        pygame.draw.polygon(surface, dark, [(cx + 40, cy + 115), (cx + 45, cy + 130), (cx + 50, cy + 115)])
-        
-        return surface
-    
-    def generate_all_sprites(self):
-        """Generar todos los sprites en memoria"""
-        print("Generando sprites...")
-        
-        self.sprites = {
-            'player_idle': self.create_snake_sprite(150, 180, 'green'),
-            'player_punch': self.create_punch_sprite(150, 180, 'green'),
-            'player_kick': self.create_kick_sprite(150, 180, 'green'),
-            'enemy_idle': self.create_snake_sprite(150, 180, 'orange'),
-            'enemy_punch': self.create_punch_sprite(150, 180, 'orange'),
-            'enemy_kick': self.create_kick_sprite(150, 180, 'orange'),
-        }
-        
-        print("✅ Sprites generados en memoria")
+        try:
+            self.sprites['player_idle'] = pygame.image.load(f'{sprite_dir}/snake_green_idle.png').convert_alpha()
+            self.sprites['player_punch'] = pygame.image.load(f'{sprite_dir}/snake_green_punch.png').convert_alpha()
+            self.sprites['player_kick'] = pygame.image.load(f'{sprite_dir}/snake_green_kick.png').convert_alpha()
+            
+            self.sprites['enemy_idle'] = pygame.image.load(f'{sprite_dir}/snake_orange_idle.png').convert_alpha()
+            self.sprites['enemy_punch'] = pygame.image.load(f'{sprite_dir}/snake_orange_punch.png').convert_alpha()
+            self.sprites['enemy_kick'] = pygame.image.load(f'{sprite_dir}/snake_orange_kick.png').convert_alpha()
+            
+            print("✅ Sprites cargados correctamente")
+        except Exception as e:
+            print(f"Error cargando sprites: {e}")
     
     def get_sprite(self, character, is_player):
         """Obtener sprite correcto según estado"""
@@ -234,14 +122,14 @@ class Game:
                 damage = PUNCH_DAMAGE if self.player.attack_type == 'punch' else KICK_DAMAGE
                 self.enemy.take_damage(damage)
                 self.player.attack_damage_dealt = True
-                print(f"¡Golpe del jugador! Daño: {damage}")
+                print(f"¡Golpe! Daño: {damage} | Distancia: {distance}")
             
         if self.enemy.is_attacking and distance < enemy_attack_range:
             if not self.enemy.attack_damage_dealt:
                 damage = PUNCH_DAMAGE if self.enemy.attack_type == 'punch' else KICK_DAMAGE
                 self.player.take_damage(damage)
                 self.enemy.attack_damage_dealt = True
-                print(f"¡Golpe del enemigo! Daño: {damage}")
+                print(f"¡Golpe enemigo! Daño: {damage} | Distancia: {distance}")
             
     def update(self):
         """Actualizar lógica"""
@@ -362,6 +250,9 @@ class Game:
         """Dibujar personaje con sprite"""
         sprite = self.get_sprite(character, is_player)
         
+        if sprite is None:
+            return
+        
         x = int(character.x)
         y = int(character.y)
         
@@ -371,6 +262,7 @@ class Game:
         rect = sprite.get_rect(center=(x, y))
         self.screen.blit(sprite, rect)
         
+        # Aura de ataque
         if character.attack_timer > 5:
             aura_radius = 130 + (self.animation_frame % 10) * 2
             pygame.draw.circle(self.screen, (255, 255, 0), (x, y), aura_radius, 3)
