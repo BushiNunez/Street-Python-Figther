@@ -40,3 +40,21 @@ YELLOW = (255, 255, 0)
 BLUE = (0, 0, 255)
 PURPLE = (128, 0, 255)
 DARK_BG = (10, 14, 42)
+
+# ANIMACIONES
+ANIMATION_FRAME_SPEED = 6  # Cambiar frame cada N game frames (60/6 = 10 FPS para anims)
+WALK_FRAMES = 6  # Número de frames en la animación de caminar
+IDLE_FRAMES = 1  # Idle es una sola imagen
+PUNCH_FRAMES = 1  # Punch es una sola imagen de ataque
+KICK_FRAMES = 1  # Kick es una sola imagen de ataque
+
+# FRAME DATA (Startup + Active + Recovery en frames de juego a 60 FPS)
+PUNCH_STARTUP = 3
+PUNCH_ACTIVE = 4
+PUNCH_RECOVERY = 8
+PUNCH_TOTAL = PUNCH_STARTUP + PUNCH_ACTIVE + PUNCH_RECOVERY
+
+KICK_STARTUP = 6
+KICK_ACTIVE = 5
+KICK_RECOVERY = 10
+KICK_TOTAL = KICK_STARTUP + KICK_ACTIVE + KICK_RECOVERY

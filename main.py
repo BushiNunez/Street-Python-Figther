@@ -1,13 +1,18 @@
-"""Punto de entrada del juego"""
-import tkinter as tk
-from src.game import Game
+"""Punto de entrada del juego Street Python Fighter"""
+import sys
+from pathlib import Path
+
+# Agregar 'src' al path para que encuentre los módulos
+sys.path.insert(0, str(Path(__file__).parent / "src"))
+
+from game import Game
+
 
 def main():
     """Ejecutar el juego"""
-    root = tk.Tk()
-    game = Game(root)
-    root.mainloop()
-
-if __name__ == "__main__":
     game = Game()
     game.run()
+
+
+if __name__ == "__main__":
+    main()
