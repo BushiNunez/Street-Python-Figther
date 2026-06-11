@@ -1,4 +1,4 @@
-"""Clase base para personajes del juego - REFACTORIZADA CON ANIMACIONES"""
+"""Clase base para personajes del juego - CON COLISIONES Y HITBOX"""
 import pygame
 from constants import (
     HEALTH_MAX, MOVE_SPEED, MOVE_RANGE_MIN, MOVE_RANGE_MAX,
@@ -8,7 +8,7 @@ from animation import AnimationController
 
 
 class Character:
-    """Clase base para jugador y enemigo con soporte de animaciones"""
+    """Clase base para jugador y enemigo con soporte de animaciones y colisiones"""
     
     def __init__(self, x, y, character_name="Green-snake", is_player=True):
         """
@@ -36,13 +36,61 @@ class Character:
         self.is_moving_left = False
         self.is_moving_right = False
         
-        # Dimensiones
-        self.width = 100
-        self.height = 120
+        # Dimensiones (tamaño de la hitbox para colisiones)
+        self.width = 80      # Ancho de la hitbox (más estrecho que el sprite visual)
+        self.height = 100    # Alto de la hitbox
         
         # Animaciones
         self.animation_controller = AnimationController(character_name)
         self.current_state = 'idle'
+    
+    def get_hitbox_rect(self):
+        """
+        Obtener el rectángulo de colisión (hitbox) del personaje.
+        
+        Returns:
+            pygame.Rect centrado en la posición del personaje
+        """
+        return pygame.Rect(
+            self.x - self.width // 2,
+            self.y - self.height // 2,
+            self.width,
+            self.height
+        )
+    
+    def can_move_to(self, new_x, other_character=None):
+        """
+        Verificar si el personaje puede moverse a una nueva posición X.
+        
+        Args:
+            new_x: Nueva posición X
+            other_character: Otro personaje para detectar colisión
+            
+        Returns:
+            True si puede moverse, False si hay colisión
+        """
+        # Verificar límites de pantalla
+        if new_x < MOVE_RANGE_MIN or new_x > MOVE_RANGE_MAX:
+            return False
+        
+        # Verificar colisión con otro personaje
+        if other_character:
+            # Crear rect hipotético del movimiento
+            temp_rect = pygame.Rect(
+                new_x - self.width // 2,
+                self.y - self.height // 2,
+                self.width,
+                self.height
+            )
+            
+            # Obtener rect del otro personaje
+            other_rect = other_character.get_hitbox_rect()
+            
+            # Si se solapan, no permitir movimiento
+            if temp_rect.colliderect(other_rect):
+                return False
+        
+        return True
     
     def _get_current_state(self):
         """Determinar el estado actual del personaje para animación"""
@@ -79,13 +127,13 @@ class Character:
             self.animation_controller.reset_animation()
     
     def move_left(self):
-        """Mover a la izquierda"""
+        """Mover a la izquierda (sin validación - se valida en Game)"""
         self.x = max(MOVE_RANGE_MIN, self.x - MOVE_SPEED)
         self.facing_right = False
         self.is_moving_left = True
     
     def move_right(self):
-        """Mover a la derecha"""
+        """Mover a la derecha (sin validación - se valida en Game)"""
         self.x = min(MOVE_RANGE_MAX, self.x + MOVE_SPEED)
         self.facing_right = True
         self.is_moving_right = True
@@ -131,8 +179,14 @@ class Character:
         """Verificar si el personaje está vivo"""
         return self.health > 0
     
-    def draw(self, screen):
-        """Dibujar el personaje en pantalla"""
+    def draw(self, screen, debug=False):
+        """
+        Dibujar el personaje en pantalla.
+        
+        Args:
+            screen: Superficie de Pygame donde dibujar
+            debug: Si True, dibuja la hitbox para debug
+        """
         sprite = self.get_sprite()
         if sprite is None:
             return
@@ -140,7 +194,14 @@ class Character:
         # Obtener rect y dibujar
         rect = sprite.get_rect(center=(int(self.x), int(self.y)))
         screen.blit(sprite, rect)
-        
+        """
         # Debug: mostrar hitbox cuando está atacando
         if self.is_attacking and self.attack_timer > 5:
             pygame.draw.circle(screen, (255, 255, 0), (int(self.x), int(self.y)), 130, 3)
+        
+        # Debug: mostrar hitbox de colisión
+     
+            if debug:
+            hitbox = self.get_hitbox_rect()
+            pygame.draw.rect(screen, (255, 0, 0), hitbox, 2)
+        """

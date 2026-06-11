@@ -1,6 +1,7 @@
-"""Lógica principal del juego - REFACTORIZADA"""
+"""Lógica principal del juego - CON IMAGEN DE FONDO"""
 import pygame
 import random
+import os
 from constants import *
 from character import Character
 from enemy import Enemy
@@ -17,9 +18,12 @@ class Game:
         self.font_medium = pygame.font.Font(None, 48)
         self.font_small = pygame.font.Font(None, 36)
         
-        # Personajes con nombres de sprite
+        # Cargar imagen de fondo
+        self.background = self._load_background()
+        
+        # Personajes
         self.player = Character(PLAYER_X, CHARACTER_Y, character_name="Green-snake", is_player=True)
-        self.enemy = Enemy(ENEMY_X, CHARACTER_Y, character_name="Green-snake")  # Por ahora mismo color
+        self.enemy = Enemy(ENEMY_X, CHARACTER_Y, character_name="Green-snake")
         
         self.running = True
         self.game_over = False
@@ -28,6 +32,35 @@ class Game:
         self.round_start_timer = 120
         self.round_number = 1
         self.keys = {}
+    
+    def _load_background(self):
+        """
+        Cargar imagen de fondo desde assets/arena.png o assets/backgrounds/arena.png
+        
+        Returns:
+            pygame.Surface escalada al tamaño de la ventana, o None si no encuentra la imagen
+        """
+        # Rutas posibles donde puede estar la imagen
+        possible_paths = [
+            "assets/arena.png",
+            "assets/backgrounds/arena.png",
+            "./assets/arena.png",
+            "./assets/backgrounds/arena.png",
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                try:
+                    img = pygame.image.load(path).convert()
+                    # Escalar la imagen al tamaño de la ventana
+                    img = pygame.transform.scale(img, (WINDOW_WIDTH, WINDOW_HEIGHT))
+                    print(f"✅ Fondo cargado desde: {path}")
+                    return img
+                except Exception as e:
+                    print(f"⚠️ Error cargando fondo desde {path}: {e}")
+        
+        print("⚠️ No se encontró imagen de fondo. Usando color sólido.")
+        return None
     
     def handle_input(self):
         """Manejar entrada del jugador y eventos de ventana"""
@@ -39,18 +72,26 @@ class Game:
             elif event.type == pygame.KEYUP:
                 self.keys[event.key] = False
         
-        # Manejo de controles del jugador (solo durante el juego)
+        # Controles del jugador (solo durante el juego)
         if not self.round_start and not self.game_over:
-            # Movimiento
+            # Movimiento CON VALIDACIÓN DE COLISIÓN
+            moved = False
             if self.keys.get(pygame.K_LEFT, False) or self.keys.get(pygame.K_a, False):
-                self.player.move_left()
-            else:
-                self.player.is_moving_left = False
+                # Validar que pueda moverse a la izquierda
+                new_x = max(MOVE_RANGE_MIN, self.player.x - MOVE_SPEED)
+                if self.player.can_move_to(new_x, self.enemy):
+                    self.player.move_left()
+                    moved = True
             
             if self.keys.get(pygame.K_RIGHT, False) or self.keys.get(pygame.K_d, False):
-                self.player.move_right()
-            else:
-                self.player.is_moving_right = False
+                # Validar que pueda moverse a la derecha
+                new_x = min(MOVE_RANGE_MAX, self.player.x + MOVE_SPEED)
+                if self.player.can_move_to(new_x, self.enemy):
+                    self.player.move_right()
+                    moved = True
+            
+            if not moved:
+                self.player.stop_moving()
             
             # Ataques
             if self.keys.get(pygame.K_z, False):
@@ -66,13 +107,11 @@ class Game:
         """Detectar colisiones entre ataques y aplicar daño"""
         distance = abs(self.player.x - self.enemy.x)
         
-        # Verificar ataque del jugador
+        # Ataque del jugador
         if self.player.is_attacking:
             player_range = PUNCH_RANGE if self.player.attack_type == 'punch' else KICK_RANGE
             
-            # Verificar si está en rango
             if distance < player_range:
-                # Verificar si está en la ventana activa (active frames del ataque)
                 if self.player.attack_timer <= (PUNCH_TOTAL - PUNCH_STARTUP if self.player.attack_type == 'punch' else KICK_TOTAL - KICK_STARTUP):
                     if not self.player.attack_damage_dealt:
                         damage = PUNCH_DAMAGE if self.player.attack_type == 'punch' else KICK_DAMAGE
@@ -80,12 +119,11 @@ class Game:
                         self.player.attack_damage_dealt = True
                         print(f"¡Golpe del Jugador! Daño: {damage} | HP Enemigo: {int(self.enemy.health)}")
         
-        # Verificar ataque del enemigo
+        # Ataque del enemigo
         if self.enemy.is_attacking:
             enemy_range = PUNCH_RANGE if self.enemy.attack_type == 'punch' else KICK_RANGE
             
             if distance < enemy_range:
-                # Verificar ventana activa del ataque enemigo
                 if self.enemy.attack_timer <= (PUNCH_TOTAL - PUNCH_STARTUP if self.enemy.attack_type == 'punch' else KICK_TOTAL - KICK_STARTUP):
                     if not self.enemy.attack_damage_dealt:
                         damage = PUNCH_DAMAGE if self.enemy.attack_type == 'punch' else KICK_DAMAGE
@@ -108,18 +146,15 @@ class Game:
         self.player.update()
         self.enemy.update(self.player)
         
-        # Actualizar direcciones de frente
+        # Actualizar dirección de vista (hacia el oponente)
         if self.enemy.x < self.player.x:
             self.player.facing_right = False
         else:
             self.player.facing_right = True
         
-        if self.player.x < self.enemy.x:
-            self.enemy.facing_right = True
-        else:
-            self.enemy.facing_right = False
+
         
-        # Detectar colisiones
+        # Detectar colisiones de daño
         self.check_collisions()
         
         # Verificar victoria/derrota
@@ -132,55 +167,50 @@ class Game:
     
     def draw(self):
         """Dibujar todo en pantalla"""
-        self.screen.fill(DARK_BG)
-        
-        # Dibujar patrón de fondo
-        for i in range(0, WINDOW_WIDTH, 120):
-            pygame.draw.rect(self.screen, (30, 30, 50), (i, 0, 100, 120))
-            pygame.draw.line(self.screen, (60, 60, 100), (i, 0), (i, 120), 2)
-        
-        # Línea central
-        pygame.draw.line(self.screen, RED, (WINDOW_WIDTH // 2, 150), (WINDOW_WIDTH // 2, WINDOW_HEIGHT - 50), 3)
+        # Dibujar fondo
+        if self.background:
+            self.screen.blit(self.background, (0, 0))
+        else:
+            # Si no hay imagen, usar color oscuro
+            self.screen.fill(DARK_BG)
         
         # Dibujar personajes
         self.player.draw(self.screen)
         self.enemy.draw(self.screen)
         
-        # Nombres de personajes
+        # UI: Nombres
         player_name = self.font_medium.render("SNAKE-KYU", True, GREEN)
         self.screen.blit(player_name, (20, 15))
         
         enemy_name = self.font_medium.render("RATTLER", True, (255, 150, 0))
         self.screen.blit(enemy_name, (WINDOW_WIDTH - 250, 15))
         
-        # Número de ronda
+        # UI: Ronda
         round_text = self.font_large.render(f"ROUND {self.round_number}", True, RED)
         round_rect = round_text.get_rect(center=(WINDOW_WIDTH // 2, 35))
         self.screen.blit(round_text, round_rect)
         
-        # Barras de vida
+        # UI: Barras de vida
         bar_width = 280
         bar_height = 28
         
-        # Barra del jugador (izquierda)
+        # Jugador (izquierda)
         pygame.draw.rect(self.screen, RED, (15, 90, bar_width, bar_height))
         fill = bar_width * (self.player.health / HEALTH_MAX)
         pygame.draw.rect(self.screen, GREEN, (15, 90, fill, bar_height))
         pygame.draw.rect(self.screen, WHITE, (15, 90, bar_width, bar_height), 3)
-        
         player_hp = self.font_small.render(f"HP: {int(self.player.health)}", True, WHITE)
         self.screen.blit(player_hp, (30, 95))
         
-        # Barra del enemigo (derecha)
+        # Enemigo (derecha)
         pygame.draw.rect(self.screen, RED, (WINDOW_WIDTH - 15 - bar_width, 90, bar_width, bar_height))
         fill = bar_width * (self.enemy.health / HEALTH_MAX)
         pygame.draw.rect(self.screen, (255, 150, 0), (WINDOW_WIDTH - 15 - bar_width + (bar_width - fill), 90, fill, bar_height))
         pygame.draw.rect(self.screen, WHITE, (WINDOW_WIDTH - 15 - bar_width, 90, bar_width, bar_height), 3)
-        
         enemy_hp = self.font_small.render(f"HP: {int(self.enemy.health)}", True, WHITE)
         self.screen.blit(enemy_hp, (WINDOW_WIDTH - 30 - 100, 95))
         
-        # Mostrar "FIGHT!" al inicio
+        # Pantalla de inicio
         if self.round_start:
             fight = self.font_title.render("FIGHT!", True, RED)
             self.screen.blit(fight, (WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT // 2 - 40))
